@@ -1,18 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { syncService } from './data-access/sync/sync.service';
+import { SyncService } from './data-access/sync/sync.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
+  imports: [RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
-  imports: [RouterOutlet]
+  styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
 
+  private sync = inject(SyncService);
+
   ngOnInit(): void {
     console.log('AppComponent initialized');
-    syncService.sync();
+    this.sync.sync();
   }
 }

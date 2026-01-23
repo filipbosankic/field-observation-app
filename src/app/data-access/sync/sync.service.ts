@@ -1,38 +1,39 @@
-import { fieldObservationRepo } from '../repositories/field-observation.repository';
-import { categoryRepo } from '../repositories/category.repository';
+import { Injectable } from '@angular/core';
+import { DomainEventRepository } from '../repositories/domain-event.repository';
 
+@Injectable({ providedIn: 'root' })
 export class SyncService {
+
+  constructor(
+    private domainEventRepo: DomainEventRepository
+  ) {}
 
   async sync() {
     console.log('Starting sync process…');
-
     await this.pushLocalChanges();
-    await this.pullServerChanges();
-
+    // await this.pullServerChanges(); // noch deaktiviert
     console.log('Sync completed.');
   }
 
   private async pushLocalChanges() {
-    console.log('Pushing local changes…');
+    const events = await this.domainEventRepo.getUnsynced();
 
-    // TODO: read all "pending" observations + categories
-    // TODO: send them to backend API
-    // TODO: update local sync status
+    if (events.length === 0) {
+      console.log('No local events to sync.');
+      return;
+    }
 
-    // placeholder
-    return;
+    console.log('Syncing events:', events);
+
+    const syncedEventIds = events.map(e => e.id);
+    await this.domainEventRepo.markSynced(syncedEventIds);
   }
 
+  /**
+   * Pull-Mechanismus wird noch in einem späteren Schritt implementiert,
+   * sobald ein serverseitiger Event-Store verfügbar ist.
+   */
   private async pullServerChanges() {
-    console.log('Pulling server changes…');
-
-    // TODO: fetch remote changes
-    // TODO: merge into IndexedDB
-    // TODO: handle conflicts
-
-    // placeholder
-    return;
+    // TODO: fetch server-side events and apply locally
   }
 }
-
-export const syncService = new SyncService();

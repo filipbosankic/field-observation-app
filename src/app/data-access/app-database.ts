@@ -10,9 +10,10 @@ export class AppDatabase extends Dexie {
   constructor() {
     super('FieldObservationDB');
 
-    this.version(1).stores({
+    this.version(2).stores({
       fieldObservations: 'id, updatedAt, deletedAt, syncStatus',
-      categories: 'id, updatedAt, deletedAt'
+      categories: 'id, updatedAt, deletedAt',
+      domainEvents: 'id, aggregateId, occurredAt, synced'
     });
   }
 }

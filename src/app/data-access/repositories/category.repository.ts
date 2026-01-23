@@ -1,7 +1,9 @@
+import { Injectable } from '@angular/core';
 import { db } from '../app-database';
 import { Category } from '../../shared/models/category.model';
 import { v4 as uuid } from 'uuid';
 
+@Injectable({ providedIn: 'root' })
 export class CategoryRepository {
 
   async create(data: Omit<Category, 'id' | 'updatedAt'>) {
@@ -36,12 +38,12 @@ export class CategoryRepository {
   }
 
   async getAll() {
-    return db.categories.toArray();
+    return db.categories
+      .filter(cat => !cat.deletedAt)
+      .toArray();
   }
 
   async getById(id: string) {
     return db.categories.get(id);
   }
 }
-
-export const categoryRepo = new CategoryRepository();

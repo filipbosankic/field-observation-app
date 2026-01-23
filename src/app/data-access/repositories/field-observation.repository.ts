@@ -1,8 +1,13 @@
+import { Injectable } from '@angular/core';
 import { db } from '../app-database';
 import { FieldObservation } from '../../shared/models/field-observation.model';
 import { v4 as uuid } from 'uuid';
+import { DomainEventRepository } from './domain-event.repository';
 
+@Injectable({ providedIn: 'root' })
 export class FieldObservationRepository {
+
+  constructor(private domainEventRepository: DomainEventRepository) { }
 
   async create(data: Omit<FieldObservation, 'id' | 'updatedAt' | 'syncStatus'>) {
     const now = new Date();
@@ -15,6 +20,16 @@ export class FieldObservationRepository {
     };
 
     await db.fieldObservations.add(entity);
+    
+    await this.domainEventRepository.add({
+      id: uuid(),
+      aggregateId: entity.id,
+      type: 'OBS_CREATED',
+      payload: entity,
+      occurredAt: new Date().toISOString(),
+      synced: false
+    });
+
     return entity;
   }
 
@@ -26,6 +41,16 @@ export class FieldObservationRepository {
       updatedAt: now,
       syncStatus: 'pending'
     });
+
+    await this.domainEventRepository.add({
+      id: uuid(),
+      aggregateId: id,
+      type: 'OBS_UPDATED',
+      payload: update,
+      occurredAt: new Date().toISOString(),
+      synced: false
+    });
+
   }
 
   async softDelete(id: string) {
@@ -36,15 +61,24 @@ export class FieldObservationRepository {
       updatedAt: now,
       syncStatus: 'pending'
     });
+
+    await this.domainEventRepository.add({
+      id: uuid(),
+      aggregateId: id,
+      type: 'OBS_DELETED',
+      payload: { deletedAt: now },
+      occurredAt: new Date().toISOString(),
+      synced: false
+    });
   }
 
   async getAll() {
-    return db.fieldObservations.toArray();
+    return db.fieldObservations
+      .filter(obs => !obs.deletedAt)
+      .toArray();
   }
 
   async getById(id: string) {
     return db.fieldObservations.get(id);
   }
 }
-
-export const fieldObservationRepo = new FieldObservationRepository();
