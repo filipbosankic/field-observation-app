@@ -11,7 +11,7 @@ export class DomainEventRepository {
 
   async getUnsynced() {
     return db.table<DomainEvent>('domainEvents')
-      .filter(e => e.synced === false)
+      .filter(e => e.synced !== true)
       .toArray();
   }
 

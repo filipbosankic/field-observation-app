@@ -6,6 +6,7 @@ import { FieldObservation } from '../../../shared/models/field-observation.model
 import { NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { ChangeDetectorRef } from '@angular/core';
+import { SyncService } from '../../../data-access/sync/sync.service';
 
 @Component({
   selector: 'app-field-observations-list',
@@ -14,6 +15,9 @@ import { ChangeDetectorRef } from '@angular/core';
   template: `
     <div class="container">
 
+      <button (click)="sync()" [disabled]="syncing">
+        {{ syncing ? 'Synchronisiere…' : 'Jetzt synchronisieren' }}
+      </button>
 
       <h1>Beobachtungen</h1>
 
@@ -53,8 +57,10 @@ export class FieldObservationsListComponent implements OnInit {
 
   private repo = inject(FieldObservationRepository);
   private router = inject(Router);
+  private syncService = inject(SyncService);
 
   observations: FieldObservation[] = [];
+  syncing = false;
 
   async ngOnInit() {
     await this.load();
@@ -85,6 +91,20 @@ export class FieldObservationsListComponent implements OnInit {
   async delete(id: string) {
     await this.repo.softDelete(id);
     await this.load();
+  }
+
+  async sync() {
+    console.log('SYNC BUTTON CLICKED');
+      this.syncing = true;
+
+      try {
+        await this.syncService.sync();
+        alert('Sync abgeschlossen');
+      } catch {
+        alert('Sync fehlgeschlagen');
+      } finally {
+        this.syncing = false;
+      }
   }
 
   trackById(_: number, obs: FieldObservation) {
