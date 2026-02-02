@@ -1,23 +1,24 @@
 import { Injectable } from '@angular/core';
 import { DomainEventRepository } from '../repositories/domain-event.repository';
-import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+import { ObservationProjectionService } from '../projections/observation-projection.service';
 
 @Injectable({ providedIn: 'root' })
 export class SyncService {
 
-  private readonly API_URL = 'http://localhost:3000';
+  private readonly API_URL = environment.apiUrl;
 
   constructor(
     private domainEventRepo: DomainEventRepository,
-    private http: HttpClient
-  ) {}
+    private projection: ObservationProjectionService
+  ) { }
 
   async sync() {
     console.log('Starting sync process…');
 
     await this.pushLocalChanges();
-    // await this.pullServerChanges(); // später
-    
+    await this.pullServerChanges();
+
     console.log('Sync completed.');
   }
 
@@ -38,10 +39,10 @@ export class SyncService {
       },
       body: JSON.stringify(events.map(e => ({
         id: e.id,
-        type: e.type.replace('OBS_', ''), // OBS_CREATED → CREATED
-        entityId: e.aggregateId,
+        type: e.type,
+        aggregateId: e.aggregateId,
         payload: e.payload,
-        timestamp: e.occurredAt
+        occurredAt: e.occurredAt
       })))
     });
 
@@ -53,11 +54,41 @@ export class SyncService {
     await this.domainEventRepo.markSynced(syncedEventIds);
   }
 
-  /**
-   * Pull-Mechanismus wird noch in einem späteren Schritt implementiert,
-   * sobald ein serverseitiger Event-Store verfügbar ist.
-   */
   private async pullServerChanges() {
-    // TODO: fetch server-side events and apply locally
+    //const lastSync = await this.domainEventRepo.getLastSyncTimestamp();
+
+    //const url = lastSync
+    //  ? `${this.API_URL}/events?since=${encodeURIComponent(lastSync)}`
+    //  : `${this.API_URL}/events`;
+
+    const url = `${this.API_URL}/events`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error('Pull sync failed');
+    }
+
+    const data = await response.json();
+    const remoteEvents = data.events;
+
+    if (remoteEvents.length === 0) {
+      console.log('No remote events to apply.');
+      return;
+    }
+
+    console.log('Applying remote events:', remoteEvents);
+
+    await this.domainEventRepo.storeRemoteEvents(remoteEvents);
+
+    const allEvents = await this.domainEventRepo.getAll();
+
+    allEvents.sort(
+      (a, b) =>
+        new Date(a.occurredAt).getTime() -
+        new Date(b.occurredAt).getTime()
+    );
+
+    await this.projection.rebuildFromEvents(allEvents);
   }
 }

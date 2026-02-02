@@ -9,7 +9,8 @@ export const routes: Routes = [
     component: FieldObservationsComponent,
     children: [
       { path: '', component: FieldObservationsListComponent },
-      { path: 'new', component: FieldObservationFormComponent }
+      { path: 'new', component: FieldObservationFormComponent },
+      { path: ':id/edit', component: FieldObservationFormComponent }
     ]
   },
   { path: '', redirectTo: 'observations', pathMatch: 'full' }

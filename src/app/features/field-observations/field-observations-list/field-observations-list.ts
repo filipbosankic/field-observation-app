@@ -21,17 +21,15 @@ import { SyncService } from '../../../data-access/sync/sync.service';
 
       <h1>Beobachtungen</h1>
 
-      <button class="create-btn" (click)="createNew()">Neue Beobachtung</button>
+      <button class="primary" (click)="createNew()">Neue Beobachtung</button>
 
-      <ul>
+      <ul class="list">
         <li *ngFor="let obs of observations; trackBy: trackById" class="item">
           <div>
-            <strong>{{ obs.title }}</strong> <br>
+            <strong>{{ obs.title }}</strong><br>
             <small>
-              {{ obs.timestamp | date:'short' }}
-              · {{ obs.description }}
+              {{ obs.timestamp | date:'short' }} · {{ obs.description }}
             </small>
-
           </div> 
 
           <div class="actions">
@@ -48,8 +46,7 @@ import { SyncService } from '../../../data-access/sync/sync.service';
   `
 })
 export class FieldObservationsListComponent implements OnInit {
-  
-  private cdr = inject(ChangeDetectorRef);
+
   constructor() {
     console.log('FIELD OBS LIST COMPONENT LOADED');
     console.log('LOADED:', 'LIST.TS');
@@ -58,6 +55,7 @@ export class FieldObservationsListComponent implements OnInit {
   private repo = inject(FieldObservationRepository);
   private router = inject(Router);
   private syncService = inject(SyncService);
+  private cdr = inject(ChangeDetectorRef);
 
   observations: FieldObservation[] = [];
   syncing = false;
@@ -75,13 +73,13 @@ export class FieldObservationsListComponent implements OnInit {
   async load() {
     const data = await this.repo.getAll();
     console.log('GET ALL RESULT:', data);
-  this.observations = [...data];
+    this.observations = [...data];
     this.cdr.detectChanges();
   }
 
   createNew() {
-  console.log("BUTTON CLICKED!");
-  this.router.navigate(['/observations/new']);
+    console.log("BUTTON CLICKED!");
+    this.router.navigate(['/observations/new']);
   }
 
   edit(id: string) {
@@ -95,20 +93,26 @@ export class FieldObservationsListComponent implements OnInit {
 
   async sync() {
     console.log('SYNC BUTTON CLICKED');
-      this.syncing = true;
+    this.syncing = true;
 
-      try {
-        await this.syncService.sync();
-        alert('Sync abgeschlossen');
-      } catch {
-        alert('Sync fehlgeschlagen');
-      } finally {
-        this.syncing = false;
-      }
+    this.cdr.detectChanges();
+
+    try {
+      await this.syncService.sync();
+
+      await this.load();
+
+      alert('Sync abgeschlossen');
+    } catch {
+      alert('Sync fehlgeschlagen');
+    } finally {
+      this.syncing = false;
+      this.cdr.detectChanges();
+    }
   }
 
   trackById(_: number, obs: FieldObservation) {
-  return obs.id;
-}
+    return obs.id;
+  }
 
 }
