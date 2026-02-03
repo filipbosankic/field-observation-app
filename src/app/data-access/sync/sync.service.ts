@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { DomainEventRepository } from '../repositories/domain-event.repository';
 import { environment } from '../../../environments/environment';
 import { ObservationProjectionService } from '../projections/observation-projection.service';
+import { CategoryProjectionService } from '../projections/category-projection.service';
 
 @Injectable({ providedIn: 'root' })
 export class SyncService {
@@ -10,7 +11,8 @@ export class SyncService {
 
   constructor(
     private domainEventRepo: DomainEventRepository,
-    private projection: ObservationProjectionService
+    private observationProjection: ObservationProjectionService,
+    private categoryProjection: CategoryProjectionService
   ) { }
 
   async sync() {
@@ -89,6 +91,10 @@ export class SyncService {
         new Date(b.occurredAt).getTime()
     );
 
-    await this.projection.rebuildFromEvents(allEvents);
+    for (const event of allEvents) {
+      await this.categoryProjection.apply(event);
+    }
+
+    await this.observationProjection.rebuildFromEvents(allEvents);
   }
 }
