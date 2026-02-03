@@ -14,34 +14,42 @@ import { SyncService } from '../../../data-access/sync/sync.service';
   imports: [CommonModule],
   template: `
     <div class="container">
+      <div class="header">
+        <button (click)="sync()" [disabled]="syncing">
+          {{ syncing ? 'Synchronisiere…' : 'Jetzt synchronisieren' }}
+        </button>
+        <h1>Beobachtungen</h1>
+        <button class="primary" (click)="createNew()">Neue Beobachtung</button>
+      </div>
 
-      <button (click)="sync()" [disabled]="syncing">
-        {{ syncing ? 'Synchronisiere…' : 'Jetzt synchronisieren' }}
-      </button>
-
-      <h1>Beobachtungen</h1>
-
-      <button class="primary" (click)="createNew()">Neue Beobachtung</button>
-
-      <ul class="list">
-        <li *ngFor="let obs of observations; trackBy: trackById" class="item">
-          <div>
-            <strong>{{ obs.title }}</strong><br>
-            <small>
-              {{ obs.timestamp | date:'short' }} · {{ obs.description }}
-            </small>
-          </div> 
-
-          <div class="actions">
-            <button (click)="edit(obs.id)">Bearbeiten</button>
-            <button (click)="delete(obs.id)">Löschen</button>
+      <div class="content">
+        <ng-container *ngIf="observations.length > 0">
+          <div class="card list-card">
+            <ul class="list">
+              <li *ngFor="let obs of observations; trackBy: trackById" class="item">
+                <div>
+                  <strong>{{ obs.title }}</strong><br>
+                  <small> {{ obs.timestamp | date:'short' }} · {{ obs.description }}</small>
+                </div>
+                <div class="actions">
+                  <button (click)="edit(obs.id)">Bearbeiten</button>
+                  <button (click)="delete(obs.id)">Löschen</button>
+                </div>
+              </li>
+            </ul>
           </div>
-        </li>
-      </ul>
-
-      <p *ngIf="observations.length === 0">
-        Noch keine Beobachtungen erfasst.
-      </p>
+        </ng-container>
+        <div *ngIf="observations.length === 0" class="empty-wrapper">
+          <div class="empty-state">
+            <div class="empty-title">
+              Noch keine Beobachtungen vorhanden.
+            </div>
+            <div class="empty-text">
+              Erstelle eine neue Beobachtung, um zu beginnen.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   `
 })

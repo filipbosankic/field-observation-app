@@ -13,7 +13,10 @@ import { ActivatedRoute, Router } from '@angular/router';
   ],
   template: `
     <div class="container">
-      <h2>{{ isEdit ? 'Beobachtung bearbeiten' : 'Neue Beobachtung' }}</h2>
+      <button class="back-link" (click)="goBack()">
+        ← Zur Übersicht
+      </button>
+      <h2 class="card-title">{{ isEdit ? 'Beobachtung bearbeiten' : 'Neue Beobachtung' }}</h2>
       <div class="card">
         <form (ngSubmit)="save()">
           <label>Titel</label>
@@ -87,6 +90,10 @@ export class FieldObservationFormComponent implements OnInit {
       });
     }
 
+    this.router.navigate(['/observations']);
+  }
+
+  goBack() {
     this.router.navigate(['/observations']);
   }
 }
