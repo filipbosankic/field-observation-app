@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FieldObservationRepository } from '../../../data-access/repositories/field-observation.repository';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Category } from '../../../shared/models/category.model';
+import { CategoryRepository } from '../../../data-access/repositories/category.repository';
 
 @Component({
   selector: 'app-field-observation-form',
@@ -25,6 +27,18 @@ import { ActivatedRoute, Router } from '@angular/router';
           <label>Beschreibung</label>
           <textarea [(ngModel)]="description" name="description"></textarea>
 
+          <label>Kategorie</label>
+
+          <select
+            *ngIf="categories.length > 0"
+            [(ngModel)]="selectedCategoryId"
+            name="categoryId"
+          >
+            <option *ngFor="let cat of categories" [value]="cat.id">
+              {{ cat.name }}
+            </option>
+          </select>
+
           <label>Zeitpunkt</label>
           <input type="datetime-local" [(ngModel)]="timestamp" name="timestamp" required>
 
@@ -37,6 +51,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 export class FieldObservationFormComponent implements OnInit {
 
   private repo = inject(FieldObservationRepository);
+  private categoryRepo = inject(CategoryRepository);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
@@ -48,7 +63,15 @@ export class FieldObservationFormComponent implements OnInit {
   description = '';
   timestamp = new Date().toISOString().slice(0, 16);
 
+  categories: Category[] = [];
+  selectedCategoryId = 'default';
+
   async ngOnInit() {
+    await this.categoryRepo.ensureSeedCategories();
+    this.categories = await this.categoryRepo.getAll();
+    
+    this.cdr.detectChanges();
+
     this.id = this.route.snapshot.paramMap.get('id');
     this.isEdit = !!this.id;
 
@@ -63,6 +86,7 @@ export class FieldObservationFormComponent implements OnInit {
 
       this.title = obs.title;
       this.description = obs.description;
+      this.selectedCategoryId = obs.categoryId ?? 'default';
 
       const d = new Date(obs.timestamp);
       this.timestamp = new Date(
@@ -79,14 +103,15 @@ export class FieldObservationFormComponent implements OnInit {
       await this.repo.update(this.id, {
         title: this.title,
         description: this.description,
-        timestamp: new Date(this.timestamp)
+        timestamp: new Date(this.timestamp),
+        categoryId: this.selectedCategoryId
       });
     } else {
       await this.repo.create({
         title: this.title,
         description: this.description,
         timestamp: new Date(this.timestamp),
-        categoryId: 'default'
+        categoryId: this.selectedCategoryId
       });
     }
 

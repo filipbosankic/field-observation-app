@@ -104,6 +104,13 @@ input[type="datetime-local"] {
   -webkit-appearance: none;
 }
 
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #111;
+}
+
 /* ===== Card ===== */
 
 .card {

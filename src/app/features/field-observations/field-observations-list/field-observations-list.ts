@@ -7,6 +7,7 @@ import { NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { ChangeDetectorRef } from '@angular/core';
 import { SyncService } from '../../../data-access/sync/sync.service';
+import { CategoryRepository } from '../../../data-access/repositories/category.repository';
 
 @Component({
   selector: 'app-field-observations-list',
@@ -28,8 +29,14 @@ import { SyncService } from '../../../data-access/sync/sync.service';
             <ul class="list">
               <li *ngFor="let obs of observations; trackBy: trackById" class="item">
                 <div>
-                  <strong>{{ obs.title }}</strong><br>
-                  <small> {{ obs.timestamp | date:'short' }} · {{ obs.description }}</small>
+                  <strong>{{ obs.title }}</strong>
+                  <span style="margin-left: 0.5rem; color: #666; font-size: 0.85rem;">
+                    • {{ categoriesMap.get(obs.categoryId) ?? 'Unbekannt' }}
+                  </span>
+                  <br>
+                  <small>
+                    {{ obs.timestamp | date:'short' }} · {{ obs.description }}
+                  </small>
                 </div>
                 <div class="actions">
                   <button (click)="edit(obs.id)">Bearbeiten</button>
@@ -61,11 +68,13 @@ export class FieldObservationsListComponent implements OnInit {
   }
 
   private repo = inject(FieldObservationRepository);
+  private categoryRepo = inject(CategoryRepository);
   private router = inject(Router);
   private syncService = inject(SyncService);
   private cdr = inject(ChangeDetectorRef);
 
   observations: FieldObservation[] = [];
+  categoriesMap = new Map<string, string>();
   syncing = false;
 
   async ngOnInit() {
@@ -79,11 +88,22 @@ export class FieldObservationsListComponent implements OnInit {
   }
 
   async load() {
-    const data = await this.repo.getAll();
-    console.log('GET ALL RESULT:', data);
-    this.observations = [...data];
+    const [observations, categories] = await Promise.all([
+      this.repo.getAll(),
+      this.categoryRepo.getAll()
+    ]);
+
+    this.categoriesMap = new Map(
+      categories.map(cat => [cat.id, cat.name])
+    );
+
+    console.log('GET ALL OBSERVATIONS:', observations);
+    console.log('GET ALL CATEGORIES:', categories);
+
+    this.observations = [...observations];
     this.cdr.detectChanges();
   }
+
 
   createNew() {
     console.log("BUTTON CLICKED!");
