@@ -84,7 +84,8 @@ form {
 
 /* Inputs */
 input,
-textarea {
+textarea,
+select {
   padding: 0.5rem;
   font-size: 1rem;
   border-radius: 6px;
@@ -96,6 +97,11 @@ textarea {
 textarea {
   resize: vertical;
   min-height: 80px;
+}
+
+input[type="datetime-local"] {
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 /* ===== Card ===== */
